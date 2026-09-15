@@ -248,13 +248,7 @@ async function executeAiQuery() {
 
     let ans = json.answer || (json.data && json.data.answer) || 'No response details returned.';
 
-    ans = ans.replace(/^### (.*$)/gim, '<h3 style="font-size:1rem; font-weight:700; margin-bottom:6px; color:var(--cyan-accent);">$1</h3>')
-             .replace(/^#### (.*$)/gim, '<h4 style="font-size:0.9rem; font-weight:700; margin-top:8px; margin-bottom:4px; color:var(--text-main);">$1</h4>')
-             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-             .replace(/`(.*?)`/g, '<code style="color:var(--cyan-accent);">$1</code>')
-             .replace(/\n/g, '<br>');
-
-    output.innerHTML = ans;
+    output.innerHTML = renderAiReport(ans);
   } catch (err) {
     clearTimeout(timeoutId);
     if (err.name === 'AbortError') {
@@ -268,6 +262,21 @@ async function executeAiQuery() {
       askBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Ask AI`;
     }
   }
+}
+
+function renderAiReport(mdText) {
+  if (!mdText) return '<div style="color:var(--text-muted);">No investigation details available.</div>';
+
+  let html = mdText
+    .replace(/^### (.*$)/gim, '<h3 style="font-size:1.05rem; font-weight:800; color:var(--cyan-accent); margin-top:4px; margin-bottom:10px; border-bottom:1px solid var(--border-subtle); padding-bottom:6px;">$1</h3>')
+    .replace(/^#### (.*$)/gim, '<h4 style="font-size:0.92rem; font-weight:700; color:var(--text-main); margin-top:14px; margin-bottom:6px;">$1</h4>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--text-main);">$1</strong>')
+    .replace(/`(.*?)`/g, '<code style="color:var(--cyan-accent); background:rgba(0,240,255,0.08); padding:2px 6px; border-radius:4px; font-size:0.82rem;">$1</code>')
+    .replace(/^• (.*$)/gim, '<li style="margin-bottom:4px; color:var(--text-main); list-style:none;"><span style="color:var(--cyan-accent); margin-right:6px;">•</span> $1</li>')
+    .replace(/\n\n+/g, '<div style="height:6px;"></div>')
+    .replace(/\n/g, '<br>');
+
+  return `<div class="ai-report-content" style="line-height:1.6; font-size:0.88rem;">${html}</div>`;
 }
 
 document.addEventListener('DOMContentLoaded', populateTargetSelect);
