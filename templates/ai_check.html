@@ -203,6 +203,10 @@ async function executeAiQuery() {
   const askBtn = document.getElementById('ai-ask-btn');
   const query = input ? input.value.trim() : '';
 
+  if (input) {
+    input.value = '';
+  }
+
   if (askBtn) {
     askBtn.disabled = true;
     askBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Analyzing...`;
