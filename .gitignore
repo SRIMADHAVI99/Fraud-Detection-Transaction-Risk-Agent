@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 .env
 database/*.db
+!database/fraudguard.db
 .ipynb_checkpoints/
 .DS_Store
 *.log

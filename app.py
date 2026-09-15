@@ -12,7 +12,6 @@ from routes.transactions import transactions_bp
 from routes.reports import reports_bp
 from routes.settings import settings_bp
 from routes.checker import checker_bp
-from ml.train_model import train_and_evaluate
 
 def create_app():
     app = Flask(__name__, static_folder='static', template_folder='templates')
@@ -88,12 +87,14 @@ def _init_db_and_models():
     try:
         if not Config.FRAUD_MODEL_PATH.exists() or not Config.ANOMALY_MODEL_PATH.exists():
             print("ML models missing. Training initial models...")
+            from ml.train_model import train_and_evaluate
             train_and_evaluate()
 
         if Transaction.query.count() == 0:
             csv_path = Config.DATASET_PATH
             if not csv_path.exists():
                 print("Dataset file missing. Generating data and training models...")
+                from ml.train_model import train_and_evaluate
                 train_and_evaluate()
                 
             if csv_path.exists():
