@@ -85,99 +85,102 @@ def create_app():
 
 def _init_db_and_models():
     """Ensure ML models exist and populate DB cleanly if empty."""
-    if not Config.FRAUD_MODEL_PATH.exists() or not Config.ANOMALY_MODEL_PATH.exists():
-        print("ML models missing. Training initial models...")
-        train_and_evaluate()
-
-    if Transaction.query.count() == 0:
-        csv_path = Config.DATASET_PATH
-        if not csv_path.exists():
-            print("Dataset file missing. Generating data and training models...")
+    try:
+        if not Config.FRAUD_MODEL_PATH.exists() or not Config.ANOMALY_MODEL_PATH.exists():
+            print("ML models missing. Training initial models...")
             train_and_evaluate()
-            
-        if csv_path.exists():
-            print("Seeding database with transaction records...")
-            df = pd.read_csv(csv_path)
-            
-            batch = []
-            alerts = []
-            
-            for idx, row in df.iterrows():
-                is_fraud = int(row.get('is_fraud', 0))
-                new_dev = bool(row.get('new_device', 0))
-                loc_chg = bool(row.get('location_change', 0))
-                txns_10m = int(row.get('transactions_last_10min', 1))
-                ratio = float(row.get('amount_ratio', 1.0))
-                
-                # Dynamic pre-calculated risk score bounds
-                if is_fraud:
-                    score = min(70.0 + (ratio * 3) + (txns_10m * 2), 99.9)
-                    level = 'HIGH RISK'
-                    status = 'BLOCKED'
-                    reasons = ["High-risk behavioral pattern detected", "Unusual account activity"]
-                elif ratio > 3.0 or new_dev or loc_chg or txns_10m >= 3:
-                    score = min(35.0 + (ratio * 4), 60.0)
-                    level = 'CHECK'
-                    status = 'UNDER_REVIEW'
-                    reasons = ["Unusual amount or parameter observed"]
-                else:
-                    score = max(5.0, round(ratio * 8.0, 1))
-                    level = 'SAFE'
-                    status = 'ALLOWED'
-                    reasons = ["Regular purchasing behavior"]
-                    
-                created_dt = datetime.now()
-                if 'created_at' in row and pd.notnull(row['created_at']):
-                    try:
-                        created_dt = datetime.strptime(str(row['created_at']), '%Y-%m-%d %H:%M:%S')
-                    except Exception:
-                        pass
 
-                txn = Transaction(
-                    transaction_id=str(row['transaction_id']),
-                    amount=float(row['amount']),
-                    location=str(row['location']),
-                    device=str(row['device']),
-                    payment_method=str(row['payment_method']),
-                    hour=int(row['hour']),
-                    avg_amount=float(row['avg_amount']),
-                    amount_ratio=float(row['amount_ratio']),
-                    new_device=new_dev,
-                    location_change=loc_chg,
-                    transactions_last_10min=txns_10m,
-                    risk_score=round(score, 1),
-                    risk_level=level,
-                    fraud_probability=round(score / 100.0, 4),
-                    is_anomaly=bool(is_fraud or ratio > 4.0),
-                    reasons=json.dumps(reasons),
-                    status=status,
-                    created_at=created_dt
-                )
-                batch.append(txn)
+        if Transaction.query.count() == 0:
+            csv_path = Config.DATASET_PATH
+            if not csv_path.exists():
+                print("Dataset file missing. Generating data and training models...")
+                train_and_evaluate()
                 
-                if level == 'HIGH RISK' or (is_fraud or ratio > 4.0):
-                    alert = FraudAlert(
+            if csv_path.exists():
+                print("Seeding database with transaction records...")
+                df = pd.read_csv(csv_path)
+                
+                batch = []
+                alerts = []
+                
+                for idx, row in df.iterrows():
+                    is_fraud = int(row.get('is_fraud', 0))
+                    new_dev = bool(row.get('new_device', 0))
+                    loc_chg = bool(row.get('location_change', 0))
+                    txns_10m = int(row.get('transactions_last_10min', 1))
+                    ratio = float(row.get('amount_ratio', 1.0))
+                    
+                    # Dynamic pre-calculated risk score bounds
+                    if is_fraud:
+                        score = min(70.0 + (ratio * 3) + (txns_10m * 2), 99.9)
+                        level = 'HIGH RISK'
+                        status = 'BLOCKED'
+                        reasons = ["High-risk behavioral pattern detected", "Unusual account activity"]
+                    elif ratio > 3.0 or new_dev or loc_chg or txns_10m >= 3:
+                        score = min(35.0 + (ratio * 4), 60.0)
+                        level = 'CHECK'
+                        status = 'UNDER_REVIEW'
+                        reasons = ["Unusual amount or parameter observed"]
+                    else:
+                        score = max(5.0, round(ratio * 8.0, 1))
+                        level = 'SAFE'
+                        status = 'ALLOWED'
+                        reasons = ["Regular purchasing behavior"]
+                        
+                    created_dt = datetime.now()
+                    if 'created_at' in row and pd.notnull(row['created_at']):
+                        try:
+                            created_dt = datetime.strptime(str(row['created_at']), '%Y-%m-%d %H:%M:%S')
+                        except Exception:
+                            pass
+
+                    txn = Transaction(
                         transaction_id=str(row['transaction_id']),
-                        alert_type='HIGH_RISK_SUSPICIOUS' if level == 'HIGH RISK' else 'ANOMALY_PATTERN',
-                        severity='HIGH' if level == 'HIGH RISK' else 'MEDIUM',
-                        message=f"Transaction {row['transaction_id']} flagged with risk score {round(score, 1)}%",
+                        amount=float(row['amount']),
+                        location=str(row['location']),
+                        device=str(row['device']),
+                        payment_method=str(row['payment_method']),
+                        hour=int(row['hour']),
+                        avg_amount=float(row['avg_amount']),
+                        amount_ratio=float(row['amount_ratio']),
+                        new_device=new_dev,
+                        location_change=loc_chg,
+                        transactions_last_10min=txns_10m,
+                        risk_score=round(score, 1),
+                        risk_level=level,
+                        fraud_probability=round(score / 100.0, 4),
+                        is_anomaly=bool(is_fraud or ratio > 4.0),
+                        reasons=json.dumps(reasons),
+                        status=status,
                         created_at=created_dt
                     )
-                    alerts.append(alert)
+                    batch.append(txn)
+                    
+                    if level == 'HIGH RISK' or (is_fraud or ratio > 4.0):
+                        alert = FraudAlert(
+                            transaction_id=str(row['transaction_id']),
+                            alert_type='HIGH_RISK_SUSPICIOUS' if level == 'HIGH RISK' else 'ANOMALY_PATTERN',
+                            severity='HIGH' if level == 'HIGH RISK' else 'MEDIUM',
+                            message=f"Transaction {row['transaction_id']} flagged with risk score {round(score, 1)}%",
+                            created_at=created_dt
+                        )
+                        alerts.append(alert)
 
-                if len(batch) >= 2000:
+                    if len(batch) >= 2000:
+                        db.session.bulk_save_objects(batch)
+                        db.session.bulk_save_objects(alerts)
+                        db.session.commit()
+                        batch = []
+                        alerts = []
+                        
+                if batch:
                     db.session.bulk_save_objects(batch)
                     db.session.bulk_save_objects(alerts)
                     db.session.commit()
-                    batch = []
-                    alerts = []
                     
-            if batch:
-                db.session.bulk_save_objects(batch)
-                db.session.bulk_save_objects(alerts)
-                db.session.commit()
-                
-            print(f"Database seeded successfully with {Transaction.query.count()} records!")
+                print(f"Database seeded successfully with {Transaction.query.count()} records!")
+    except Exception as e:
+        print(f"Database/Model initialization warning: {e}")
 
 app = create_app()
 
