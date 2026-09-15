@@ -1,0 +1,78 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="card-box">
+  <div class="card-title-header">
+    <div>
+      <div class="card-title"><i class="fa-solid fa-file-pdf" style="color:var(--cyan-accent);"></i> Security Reports</div>
+      <div class="card-subtitle">Generate evidence-based fraud monitoring reports and export PDF audit documents.</div>
+    </div>
+    <a href="/api/reports/download" class="btn btn-primary" style="padding: 10px 20px;">
+      <i class="fa-solid fa-download"></i> ↓ DOWNLOAD SECURITY REPORT
+    </a>
+  </div>
+
+  <div style="background-color: var(--bg-surface); padding: 20px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border-subtle);">
+    <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: var(--cyan-accent);"><i class="fa-solid fa-circle-info"></i> Report Contents Summary</h3>
+    <ul style="padding-left: 20px; font-size: 0.88rem; color: var(--text-main); line-height: 1.8;">
+      <li><strong>Executive Overview:</strong> Summary of total monitored volume and safety classification rates.</li>
+      <li><strong>High-Risk Audit Log:</strong> Itemized list of recent critical threats and anomalous patterns.</li>
+      <li><strong>Evidence Reasons:</strong> Machine learning feature contribution reason codes.</li>
+      <li><strong>Action Tracking:</strong> Audit trail of analyst decisions (Allowed, Under Review, Blocked).</li>
+    </ul>
+  </div>
+
+  <div class="card-title" style="margin-bottom: 16px;"><i class="fa-solid fa-list-check"></i> HIGH-RISK AUDIT PREVIEW</div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Transaction ID</th>
+          <th>Amount</th>
+          <th>Location</th>
+          <th>Risk Level</th>
+          <th>Risk Score</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="reports-preview-tbody">
+        <tr>
+          <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">Loading report audit preview...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadReportsPreview() {
+  const tbody = document.getElementById('reports-preview-tbody');
+  try {
+    const res = await fetch('/api/reports');
+    const json = await res.json();
+    if (json.success) {
+      const items = json.data.recent_suspicious;
+      if (!items || !items.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No high risk transactions recorded.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = items.map(item => `
+        <tr>
+          <td><strong>${item.transaction_id}</strong></td>
+          <td>₹${item.amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+          <td>${item.location}</td>
+          <td><span class="badge-risk ${item.risk_level === 'HIGH RISK' ? 'badge-risk-high' : 'badge-risk-check'}">${item.risk_level}</span></td>
+          <td>${item.risk_score}%</td>
+          <td><span class="badge-status badge-status-${item.status.toLowerCase()}">${item.status}</span></td>
+        </tr>
+      `).join('');
+    }
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" style="color:var(--risk-high);">Failed to load preview: ${err.message}</td></tr>`;
+  }
+}
+document.addEventListener('DOMContentLoaded', loadReportsPreview);
+</script>
+{% endblock %}

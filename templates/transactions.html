@@ -1,0 +1,86 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="card-box">
+  <div class="card-title-header">
+    <div>
+      <div class="card-title"><i class="fa-solid fa-credit-card"></i> My Transactions</div>
+      <div class="card-subtitle">Search, filter, and inspect all processed financial transactions.</div>
+    </div>
+  </div>
+
+  <!-- Filters & Search Toolbar -->
+  <div class="form-grid" style="grid-template-columns: 2fr 1fr 1fr 1fr; margin-bottom: 20px;">
+    <div class="form-group">
+      <input type="text" id="filter-search" class="form-control" placeholder="🔍 Search ID, location, device..." oninput="debounceSearch()">
+    </div>
+
+    <div class="form-group">
+      <select id="filter-risk" class="form-select" onchange="loadTransactionsPage(1)">
+        <option value="">All Risk Levels</option>
+        <option value="SAFE">🟢 Safe Only</option>
+        <option value="CHECK">🟡 Check Only</option>
+        <option value="HIGH RISK">🔴 High Risk Only</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <select id="filter-method" class="form-select" onchange="loadTransactionsPage(1)">
+        <option value="">All Payment Methods</option>
+        <option value="UPI">UPI</option>
+        <option value="Credit Card">Credit Card</option>
+        <option value="Net Banking">Net Banking</option>
+        <option value="Debit Card">Debit Card</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <select id="filter-status" class="form-select" onchange="loadTransactionsPage(1)">
+        <option value="">All Statuses</option>
+        <option value="ALLOWED">Allowed</option>
+        <option value="UNDER_REVIEW">Under Review</option>
+        <option value="BLOCKED">Blocked</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Data Table -->
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Transaction ID</th>
+          <th>Amount</th>
+          <th>Location</th>
+          <th>Device</th>
+          <th>Method</th>
+          <th>Risk Score</th>
+          <th>Safety Level</th>
+          <th>Decision</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="transactions-table-body">
+        <tr>
+          <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 24px;">
+            Loading transaction history...
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination Bar -->
+  <div class="pagination-wrapper">
+    <div id="pagination-info">Showing page 1</div>
+    <div style="display: flex; gap: 8px;">
+      <button class="btn btn-outline btn-sm" id="btn-prev-page" onclick="changePage(-1)"><i class="fa-solid fa-chevron-left"></i> Previous</button>
+      <button class="btn btn-outline btn-sm" id="btn-next-page" onclick="changePage(1)">Next <i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/transactions.js') }}"></script>
+{% endblock %}

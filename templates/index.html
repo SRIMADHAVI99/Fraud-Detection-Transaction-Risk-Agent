@@ -1,0 +1,200 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-banner">
+  <div>
+    <div class="status-live-pill">
+      <div class="status-dot"></div> SYSTEM OPERATIONAL
+    </div>
+    <h1 style="font-size: 1.75rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">
+      Welcome back, Security Analyst
+    </h1>
+    <p style="color: var(--text-muted); font-size: 0.92rem; max-width: 600px;">
+      Real-time AI-powered transaction monitoring, fraud detection, and threat intelligence center.
+    </p>
+  </div>
+
+  <!-- Abstract SVG Security Shield Visualization -->
+  <div style="width: 140px; height: 100px; display: flex; align-items: center; justify-content: center; position: relative;">
+    <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M50 10L85 25V50C85 71.5 69.5 90 50 95C30.5 90 15 71.5 15 50V25L50 10Z" stroke="#00F0FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="rgba(0,240,255,0.05)"/>
+      <circle cx="50" cy="45" r="16" stroke="#2563EB" stroke-width="2"/>
+      <circle cx="50" cy="45" r="6" fill="#00F0FF"/>
+      <line x1="50" y1="61" x2="50" y2="78" stroke="#00F0FF" stroke-width="2" stroke-dasharray="2 2"/>
+    </svg>
+  </div>
+</div>
+
+<!-- 4 Dynamic Metric Cards -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-blue">
+      <i class="fa-solid fa-credit-card"></i>
+    </div>
+    <div class="stat-info">
+      <div class="stat-value" id="stat-total-payments">...</div>
+      <div class="stat-label">Total Payments</div>
+      <div class="stat-subtext">All monitored transactions</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-green">
+      <i class="fa-solid fa-shield-check"></i>
+    </div>
+    <div class="stat-info">
+      <div class="stat-value" id="stat-safe-payments">...</div>
+      <div class="stat-label">Safe Payments</div>
+      <div class="stat-subtext">Normal behavior baseline</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-amber">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+    </div>
+    <div class="stat-info">
+      <div class="stat-value" id="stat-need-checking">...</div>
+      <div class="stat-label">Need Checking</div>
+      <div class="stat-subtext">Unusual activity flagged</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrapper stat-icon-red">
+      <i class="fa-solid fa-shield-cat"></i>
+    </div>
+    <div class="stat-info">
+      <div class="stat-value" id="stat-fraud-alerts">...</div>
+      <div class="stat-label">Fraud Alerts</div>
+      <div class="stat-subtext">High-risk threats detected</div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Dashboard Split Grid -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px;">
+  
+  <!-- Left Side: Recent Transactions Table -->
+  <div class="card-box" style="margin-bottom: 0;">
+    <div class="card-title-header">
+      <div class="card-title"><i class="fa-solid fa-list-check" style="color:var(--cyan-accent);"></i> Recent Transactions</div>
+      <a href="/transactions" class="btn btn-outline btn-sm">View All <i class="fa-solid fa-arrow-right"></i></a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Amount</th>
+            <th>Location</th>
+            <th>Method</th>
+            <th>Risk Level</th>
+            <th>Status</th>
+            <th>Time</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="recent-payments-tbody">
+          <tr>
+            <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">
+              Loading transactions...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Right Side: Quick Check Panel & AI Investigator Link -->
+  <div style="display: flex; flex-direction: column; gap: 20px;">
+    
+    <!-- Quick Check Panel -->
+    <div class="card-box" style="margin-bottom: 0;">
+      <div class="card-title" style="margin-bottom: 4px;"><i class="fa-solid fa-bolt" style="color:var(--cyan-accent);"></i> QUICK CHECK</div>
+      <div class="card-subtitle">Register a new transaction or test a payment.</div>
+
+      <!-- Demo Presets -->
+      <div style="margin-bottom: 16px;">
+        <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:6px;">Try Demo Scenarios:</div>
+        <div class="demo-preset-group">
+          <button type="button" class="demo-btn demo-btn-safe" onclick="loadDemoScenario('safe')">🟢 Safe</button>
+          <button type="button" class="demo-btn demo-btn-suspicious" onclick="loadDemoScenario('suspicious')">🟡 Suspicious</button>
+          <button type="button" class="demo-btn demo-btn-high" onclick="loadDemoScenario('high_risk')">🔴 High Risk</button>
+        </div>
+      </div>
+
+      <form id="quick-check-form" onsubmit="handleQuickCheck(event)">
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;">
+          <input type="text" id="check-txn-id" class="form-control" placeholder="Transaction / Register ID (Optional, e.g. TXN8899)">
+          <input type="number" id="check-amount" class="form-control" placeholder="Amount (₹)" required step="0.01">
+          <input type="text" id="check-location" class="form-control" placeholder="Location (e.g. Hyderabad)" required>
+          <input type="text" id="check-device" class="form-control" placeholder="Device (e.g. iPhone 15)" required>
+          <select id="check-method" class="form-select">
+            <option value="UPI">UPI</option>
+            <option value="Credit Card">Credit Card</option>
+            <option value="Net Banking">Net Banking</option>
+            <option value="Debit Card">Debit Card</option>
+          </select>
+          
+          <!-- Hidden internal values preset defaults -->
+          <input type="hidden" id="check-avg-amount" value="2500">
+          <input type="hidden" id="check-new-device" value="false">
+          <input type="hidden" id="check-new-location" value="false">
+          <input type="hidden" id="check-txns-10m" value="1">
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="check-submit-btn" style="width: 100%;">
+          <i class="fa-solid fa-magnifying-glass"></i> Register & Check Now
+        </button>
+      </form>
+
+      <div id="check-result-container" style="display: none; margin-top: 16px;"></div>
+    </div>
+
+    <!-- AI Investigator Card -->
+    <div class="card-box" style="margin-bottom: 0; background: linear-gradient(135deg, var(--bg-card) 0%, rgba(124, 58, 237, 0.15) 100%); border-color: rgba(124, 58, 237, 0.3);">
+      <div class="card-title"><i class="fa-solid fa-robot" style="color:var(--purple-accent);"></i> AI INVESTIGATOR</div>
+      <div class="card-subtitle">Ask questions about any transaction to get explainable AI analysis.</div>
+      <a href="/ai-check" class="btn btn-outline btn-sm" style="width: 100%; border-color: var(--purple-accent); color: var(--text-main);">
+        Open Investigator <i class="fa-solid fa-arrow-right"></i>
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<!-- Charts & Activity Row -->
+<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px;">
+  
+  <!-- Donut Chart: Risk Distribution -->
+  <div class="card-box" style="margin-bottom: 0;">
+    <div class="card-title" style="margin-bottom: 12px;"><i class="fa-solid fa-chart-pie" style="color:var(--cyan-accent);"></i> Risk Distribution</div>
+    <div style="position: relative; height: 220px;">
+      <canvas id="dash-chart-risk"></canvas>
+    </div>
+  </div>
+
+  <!-- Line Chart: 7-Day Trend -->
+  <div class="card-box" style="margin-bottom: 0;">
+    <div class="card-title" style="margin-bottom: 12px;"><i class="fa-solid fa-chart-line" style="color:var(--cyan-accent);"></i> Fraud Trends (7 Days)</div>
+    <div style="position: relative; height: 220px;">
+      <canvas id="dash-chart-trend"></canvas>
+    </div>
+  </div>
+
+  <!-- Vertical Recent Activity Feed -->
+  <div class="card-box" style="margin-bottom: 0;">
+    <div class="card-title" style="margin-bottom: 12px;"><i class="fa-solid fa-clock-rotate-left" style="color:var(--cyan-accent);"></i> Recent Activity</div>
+    <div id="recent-activity-feed" style="display: flex; flex-direction: column; gap: 12px; font-size: 0.8rem;">
+      <div style="color: var(--text-muted); text-align: center; padding: 20px;">Loading events...</div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

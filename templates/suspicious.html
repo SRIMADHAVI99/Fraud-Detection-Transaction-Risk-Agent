@@ -1,0 +1,156 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="card-box">
+  <div class="card-title-header">
+    <div>
+      <div class="card-title"><i class="fa-solid fa-triangle-exclamation" style="color: var(--risk-high);"></i> Threat Center</div>
+      <div class="card-subtitle">Investigate high-risk transactions and pattern anomalies requiring security decisioning.</div>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="loadSuspiciousList()"><i class="fa-solid fa-arrows-rotate"></i> Refresh Threats</button>
+  </div>
+
+  <!-- Summary Metric Pills -->
+  <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 20px;">
+    <div style="background-color: var(--bg-surface); padding: 14px; border-radius: 8px; border: 1px solid var(--risk-high-border);">
+      <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Critical Threats</div>
+      <div style="font-size: 1.5rem; font-weight: 800; color: var(--risk-high);" id="threat-critical-cnt">...</div>
+    </div>
+    <div style="background-color: var(--bg-surface); padding: 14px; border-radius: 8px; border: 1px solid var(--risk-check-border);">
+      <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Needs Review</div>
+      <div style="font-size: 1.5rem; font-weight: 800; color: var(--risk-check);" id="threat-review-cnt">...</div>
+    </div>
+    <div style="background-color: var(--bg-surface); padding: 14px; border-radius: 8px; border: 1px solid var(--border-subtle);">
+      <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Blocked Threats</div>
+      <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-main);" id="threat-blocked-cnt">...</div>
+    </div>
+  </div>
+
+  <div class="form-grid" style="grid-template-columns: 3fr 1fr; margin-bottom: 20px;">
+    <input type="text" id="suspicious-search" class="form-control" placeholder="🔍 Search threat ID, location, or device..." oninput="loadSuspiciousList()">
+    <select id="suspicious-filter-risk" class="form-select" onchange="loadSuspiciousList()">
+      <option value="">All Threat Levels</option>
+      <option value="HIGH RISK">🔴 Critical High Risk</option>
+      <option value="CHECK">🟡 Medium Check</option>
+    </select>
+  </div>
+
+  <div id="suspicious-cards-container" style="display: flex; flex-direction: column; gap: 16px;">
+    <div style="text-align: center; color: var(--text-muted); padding: 40px;">
+      Loading threat center feed...
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadSuspiciousList() {
+  const search = document.getElementById('suspicious-search').value;
+  const filterRisk = document.getElementById('suspicious-filter-risk').value;
+  const container = document.getElementById('suspicious-cards-container');
+  
+  try {
+    const res = await fetch(`/api/suspicious?search=${encodeURIComponent(search)}&per_page=20`);
+    const json = await res.json();
+    
+    if (!json.success || !json.data.items.length) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 40px; background-color: var(--bg-surface); border-radius: 12px; border: 1px solid var(--border-subtle);">
+          <i class="fa-solid fa-circle-check" style="font-size: 2.5rem; color: var(--risk-safe); margin-bottom: 12px;"></i>
+          <h3>No Threat Alerts Found</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">All monitored payments match expected security baselines.</p>
+        </div>
+      `;
+      return;
+    }
+    
+    let items = json.data.items;
+    if (filterRisk) {
+      items = items.filter(i => i.risk_level === filterRisk);
+    }
+
+    // Update summary counts
+    document.getElementById('threat-critical-cnt').textContent = items.filter(i => i.risk_level === 'HIGH RISK').length;
+    document.getElementById('threat-review-cnt').textContent = items.filter(i => i.status === 'UNDER_REVIEW').length;
+    document.getElementById('threat-blocked-cnt').textContent = items.filter(i => i.status === 'BLOCKED').length;
+
+    container.innerHTML = items.map(item => {
+      const borderStyle = item.risk_level === 'HIGH RISK' ? 'border-left: 5px solid #ef4444; border-color: rgba(239,68,68,0.3);' : 'border-left: 5px solid #f59e0b; border-color: rgba(245,158,11,0.3);';
+      const badgeClass = item.risk_level === 'HIGH RISK' ? 'badge-risk-high' : 'badge-risk-check';
+      const reasonsList = (item.reasons || []).map(r => `<li>${r}</li>`).join('');
+      
+      return `
+        <div class="card-box" style="margin-bottom: 0; ${borderStyle}">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+            <div>
+              <span style="font-weight: 800; font-size: 1.1rem; color: var(--text-main);">${item.transaction_id}</span>
+              <span class="badge-risk ${badgeClass}" style="margin-left: 8px;">${item.risk_level} (${item.risk_score}%)</span>
+              <span class="badge-status badge-status-${item.status.toLowerCase()}" style="margin-left: 8px;">${item.status}</span>
+            </div>
+            <div style="font-size: 1.2rem; font-weight: 800; color: var(--text-main);">
+              ₹${item.amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+            </div>
+          </div>
+          
+          <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px; display: flex; gap: 16px; flex-wrap: wrap;">
+            <span><i class="fa-solid fa-location-dot"></i> ${item.location}</span>
+            <span><i class="fa-solid fa-laptop"></i> ${item.device}</span>
+            <span><i class="fa-solid fa-wallet"></i> ${item.payment_method}</span>
+            <span><i class="fa-solid fa-clock"></i> ${item.created_at || 'Recently'}</span>
+          </div>
+          
+          <div style="background-color: var(--bg-surface); padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; border: 1px solid var(--border-subtle);">
+            <div style="font-weight: 700; font-size: 0.8rem; margin-bottom: 4px; color: var(--cyan-accent);">
+              <i class="fa-solid fa-microchip"></i> WHY WAS THIS FLAGGED:
+            </div>
+            <ul style="padding-left: 20px; font-size: 0.82rem; color: var(--text-main);">
+              ${reasonsList || '<li>Pattern anomaly detected</li>'}
+            </ul>
+          </div>
+          
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn btn-success btn-sm" onclick="takeActionThreat('${item.transaction_id}', 'ALLOW')">
+              <i class="fa-solid fa-check"></i> ALLOW
+            </button>
+            <button class="btn btn-warning btn-sm" onclick="takeActionThreat('${item.transaction_id}', 'REVIEW')">
+              <i class="fa-solid fa-eye"></i> REVIEW
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="takeActionThreat('${item.transaction_id}', 'BLOCK')">
+              <i class="fa-solid fa-ban"></i> BLOCK
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="openInvestigationDrawer('${item.transaction_id}')">
+              <i class="fa-solid fa-sliders"></i> INVESTIGATE DRAWER
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+  } catch (err) {
+    container.innerHTML = `<div style="color: var(--risk-high);">Failed to load threat center feed: ${err.message}</div>`;
+  }
+}
+
+async function takeActionThreat(txnId, actionType) {
+  try {
+    const res = await fetch(`/api/transactions/${txnId}/action`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action: actionType})
+    });
+    const json = await res.json();
+    if (json.success) {
+      showToast(`Transaction ${txnId} set to ${json.data.status}`, 'success');
+      loadSuspiciousList();
+    } else {
+      showToast(json.error, 'error');
+    }
+  } catch (err) {
+    showToast(`Error: ${err.message}`, 'error');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadSuspiciousList);
+</script>
+{% endblock %}

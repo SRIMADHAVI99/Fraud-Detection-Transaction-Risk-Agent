@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FRAUDGUARD AI — Enterprise Fraud Intelligence Center</title>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Custom Design System -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div id="app-container">
+    
+    <!-- Left Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="/" class="sidebar-brand">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>FRAUDGUARD AI</span>
+        </a>
+        <div class="sidebar-subtitle">Secure Transactions, Safer Tomorrow</div>
+      </div>
+      
+      <ul class="sidebar-nav">
+        <li class="nav-item {% if page_title == 'Fraud Intelligence Overview' %}active{% endif %}">
+          <a href="/"><i class="fa-solid fa-house"></i> <span>Overview</span></a>
+        </li>
+        <li class="nav-item {% if page_title == 'Transactions' %}active{% endif %}">
+          <a href="/transactions"><i class="fa-solid fa-credit-card"></i> <span>Transactions</span></a>
+        </li>
+        <li class="nav-item {% if page_title == 'Threat Center' %}active{% endif %}">
+          <a href="/suspicious"><i class="fa-solid fa-triangle-exclamation"></i> <span>Threat Center</span></a>
+        </li>
+        <li class="nav-item {% if page_title == 'Safety Check' %}active{% endif %}">
+          <a href="/safety-check"><i class="fa-solid fa-shield-virus"></i> <span>Safety Check</span></a>
+        </li>
+        <li class="nav-item {% if page_title == 'AI Fraud Investigator' %}active{% endif %}">
+          <a href="/ai-check"><i class="fa-solid fa-robot"></i> <span>AI Investigator</span></a>
+        </li>
+        <li class="nav-item {% if page_title == 'Risk Analytics' %}active{% endif %}">
+          <a href="/activity"><i class="fa-solid fa-chart-column"></i> <span>Risk Analytics</span></a>
+        </li>
+        <li class="nav-item {% if page_title == 'Security Reports' %}active{% endif %}">
+          <a href="/reports"><i class="fa-solid fa-file-pdf"></i> <span>Reports</span></a>
+        </li>
+        <li class="nav-item {% if page_title == 'Settings' %}active{% endif %}">
+          <a href="/settings"><i class="fa-solid fa-gear"></i> <span>Settings</span></a>
+        </li>
+      </ul>
+      
+      <!-- System Online Indicators -->
+      <div class="sidebar-status-box">
+        <div class="status-indicator">
+          <div class="status-dot"></div>
+          <span>ML Engine Online</span>
+        </div>
+        <div class="status-indicator">
+          <div class="status-dot"></div>
+          <span>Database Connected</span>
+        </div>
+        <div class="status-indicator">
+          <div class="status-dot"></div>
+          <span>AI Risk Engine Online</span>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div>FRAUDGUARD AI v2.4</div>
+        <div style="opacity: 0.7;">Hackathon Edition</div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="main-wrapper">
+      
+      <!-- Top Command Bar -->
+      <header class="top-command-bar">
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <button class="btn btn-outline btn-sm" id="sidebar-toggle" style="display: none;" aria-label="Toggle Menu">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          
+          <div class="top-search-group">
+            <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted); font-size: 0.85rem;"></i>
+            <input type="text" id="global-search-input" placeholder="Search transaction ID, location, device..." onkeyup="handleGlobalSearch(event)">
+          </div>
+        </div>
+
+        <div class="top-right-group">
+          <!-- Dynamic Live Clock -->
+          <div class="clock-display" id="live-clock">
+            Loading time...
+          </div>
+          
+          <div class="user-profile-badge" title="Security Analyst Profile">
+            <div class="avatar-circle">SM</div>
+            <div style="display: flex; flex-direction: column;">
+              <span style="font-weight: 700; font-size: 0.8rem;">Security Analyst</span>
+              <span style="font-size: 0.68rem; color: var(--text-muted);">Level 3 Operations</span>
+            </div>
+            <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem; color: var(--text-muted);"></i>
+          </div>
+        </div>
+      </header>
+
+      <!-- Content Body -->
+      <main class="content-body">
+        {% block content %}{% endblock %}
+      </main>
+
+    </div>
+  </div>
+
+  <!-- Right Slide-in SOC Investigation Drawer -->
+  <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+  <div class="drawer-content" id="investigation-drawer">
+    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 16px; margin-bottom: 16px;">
+      <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--cyan-accent);"><i class="fa-solid fa-shield-halved"></i> TRANSACTION INTELLIGENCE</h3>
+      <button class="btn btn-outline btn-sm" onclick="closeDrawer()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="drawer-body">
+      <!-- Injected dynamically via JS -->
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Core App JS -->
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
