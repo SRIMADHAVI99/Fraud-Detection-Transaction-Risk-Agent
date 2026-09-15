@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 
@@ -30,7 +31,6 @@ class Transaction(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
     def to_dict(self):
-        import json
         reasons_list = []
         if self.reasons:
             try:

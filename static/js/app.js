@@ -157,6 +157,7 @@ async function drawerTakeAction(txnId, actionType) {
       if (window.loadTransactionsPage) window.loadTransactionsPage(1);
       if (window.loadSuspiciousList) window.loadSuspiciousList();
       if (window.loadDashboardStats) window.loadDashboardStats();
+      if (window.loadRecentPayments) window.loadRecentPayments();
     } else {
       showToast(json.error, 'error');
     }

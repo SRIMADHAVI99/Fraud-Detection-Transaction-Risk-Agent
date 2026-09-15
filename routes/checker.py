@@ -2,6 +2,7 @@ import os
 from flask import Blueprint, jsonify, request
 from services.risk_engine import RiskEngine
 from services.transaction_service import TransactionService
+from services.ai_service import AIService
 
 checker_bp = Blueprint('checker_api', __name__, url_prefix='/api')
 
@@ -80,8 +81,6 @@ def check_transaction():
 def get_demo_presets():
     """Returns pre-built demo scenarios for instant hackathon testing."""
     return jsonify({'success': True, 'data': DEMO_SCENARIOS})
-
-from services.ai_service import AIService
 
 @checker_bp.route('/ai/investigate', methods=['POST'])
 def ai_investigate():

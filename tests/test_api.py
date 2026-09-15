@@ -77,3 +77,23 @@ def test_ai_investigate_api(client):
     json_data = res.get_json()
     assert json_data['success'] is True
     assert 'answer' in json_data['data']
+
+def test_settings_api(client):
+    # GET settings
+    get_res = client.get('/api/settings')
+    assert get_res.status_code == 200
+    assert get_res.get_json()['success'] is True
+
+    # PUT settings
+    put_res = client.put('/api/settings', json={
+        'notifications_safety': 'OFF',
+        'auto_block_threshold': '70'
+    })
+    assert put_res.status_code == 200
+    assert put_res.get_json()['data']['auto_block_threshold'] == '70'
+
+def test_pdf_report_download_api(client):
+    res = client.get('/api/reports/download')
+    assert res.status_code == 200
+    assert res.mimetype == 'application/pdf'
+

@@ -145,6 +145,46 @@ class AIService:
                 f"**Baseline Evaluation:** {'High deviation from normal purchasing habits.' if ratio_val > 3.0 or is_new_dev else 'Consistent with standard account history.'}"
             )
 
+        elif any(w in q_lower for w in ['device', 'hardware', 'phone', 'browser', 'client']):
+            dev_status = "⚠️ Unrecognized / New Hardware" if is_new_dev else "🟢 Recognized / Trusted Device"
+            answer = (
+                f"### Device Analysis for `{txn_id_display}`\n\n"
+                f"• **Device Fingerprint:** `{dev_val}`\n"
+                f"• **Device Classification:** {dev_status}\n"
+                f"• **Risk Contribution:** {'High security risk (untrusted device)' if is_new_dev else 'Low risk (known device)'}\n\n"
+                f"#### Key Risk Factors:\n{reasons_bullets}"
+            )
+
+        elif any(w in q_lower for w in ['location', 'geo', 'where', 'city', 'country']):
+            loc_status = "⚠️ New / Unusual Location" if is_new_loc else "🟢 Regular / Usual Location"
+            answer = (
+                f"### Location Intelligence for `{txn_id_display}`\n\n"
+                f"• **Transaction Origin:** {loc_val}\n"
+                f"• **Geographic Assessment:** {loc_status}\n"
+                f"• **Risk Contribution:** {'Elevated risk due to location shift' if is_new_loc else 'Standard geographical profile'}\n\n"
+                f"#### Key Risk Factors:\n{reasons_bullets}"
+            )
+
+        elif any(w in q_lower for w in ['amount', 'price', 'cost', 'value', 'ratio']):
+            answer = (
+                f"### Payment Amount Analysis for `{txn_id_display}`\n\n"
+                f"• **Transaction Amount:** ₹{amount_val:,.2f}\n"
+                f"• **Historical User Average:** ₹{avg_val:,.2f}\n"
+                f"• **Amount Spike Ratio:** {ratio_val}x usual average\n"
+                f"• **Method:** {method_val}\n\n"
+                f"#### Key Risk Factors:\n{reasons_bullets}"
+            )
+
+        elif any(w in q_lower for w in ['score', 'probability', 'percent', 'risk level']):
+            answer = (
+                f"### Risk Score & Probability Breakdown for `{txn_id_display}`\n\n"
+                f"• **Risk Level:** {risk_level}\n"
+                f"• **Composite Risk Score:** {risk_score}%\n"
+                f"• **Supervised Model Fraud Probability:** {fraud_prob}%\n"
+                f"• **Unsupervised Anomaly Flag:** {'Outlier Pattern Detected' if is_anomaly_val else 'Inlier Pattern'}\n\n"
+                f"#### Key Risk Factors:\n{reasons_bullets}"
+            )
+
         else:
             answer = (
                 f"### Investigation Report for Transaction `{txn_id_display}`\n\n"

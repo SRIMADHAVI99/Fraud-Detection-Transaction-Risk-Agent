@@ -140,19 +140,43 @@ let currentTargetTxn = null;
 
 async function populateTargetSelect() {
   const select = document.getElementById('ai-txn-select');
-  try {
-    const res = await fetch('/api/suspicious?per_page=15');
-    const json = await res.json();
-    if (json.success && json.data.items.length) {
-      select.innerHTML = '<option value="">-- Choose Transaction to Investigate --</option>' + 
-        json.data.items.map(t => `<option value="${t.transaction_id}">${t.transaction_id} — ₹${t.amount.toLocaleString('en-IN')} (${t.risk_level})</option>`).join('');
+  const urlParams = new URLSearchParams(window.location.search);
+  const paramTxnId = urlParams.get('txn_id') || urlParams.get('id');
 
-      const firstId = json.data.items[0].transaction_id;
-      select.value = firstId;
-      await onSelectTransaction(firstId);
+  try {
+    let res = await fetch('/api/suspicious?per_page=15');
+    let json = await res.json();
+    let items = (json.success && json.data.items) ? json.data.items : [];
+
+    if (!items.length) {
+      res = await fetch('/api/transactions?per_page=15');
+      json = await res.json();
+      items = (json.success && json.data.items) ? json.data.items : [];
+    }
+
+    if (items.length) {
+      select.innerHTML = '<option value="">-- Choose Transaction to Investigate --</option>' + 
+        items.map(t => `<option value="${t.transaction_id}">${t.transaction_id} — ₹${t.amount.toLocaleString('en-IN')} (${t.risk_level})</option>`).join('');
+
+      let selectedId = items[0].transaction_id;
+      if (paramTxnId) {
+        const found = items.find(t => t.transaction_id === paramTxnId.trim());
+        if (found) {
+          selectedId = found.transaction_id;
+        } else {
+          const opt = document.createElement('option');
+          opt.value = paramTxnId.trim();
+          opt.textContent = `${paramTxnId.trim()} (Target Transaction)`;
+          select.appendChild(opt);
+          selectedId = paramTxnId.trim();
+        }
+      }
+
+      select.value = selectedId;
+      await onSelectTransaction(selectedId);
     }
   } catch (err) {
-    console.error(err);
+    console.error('Failed to populate target select:', err);
   }
 }
 
