@@ -1,6 +1,9 @@
 /* FRAUDGUARD AI — Enterprise Helper JavaScript */
 
 document.addEventListener('DOMContentLoaded', () => {
+  // 0. Theme Initialization
+  initTheme();
+
   // 1. Dynamic Live Clock
   initLiveClock();
   
@@ -13,6 +16,36 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+// Theme Toggle Management
+function applyTheme(theme) {
+  if (theme === 'light') {
+    document.documentElement.classList.add('light-theme');
+    document.body.classList.add('light-theme');
+    localStorage.setItem('fraudguard_theme', 'light');
+  } else {
+    document.documentElement.classList.remove('light-theme');
+    document.body.classList.remove('light-theme');
+    localStorage.setItem('fraudguard_theme', 'dark');
+  }
+}
+
+async function initTheme() {
+  const savedTheme = localStorage.getItem('fraudguard_theme');
+  if (savedTheme) {
+    applyTheme(savedTheme);
+  } else {
+    try {
+      const res = await fetch('/api/settings');
+      const json = await res.json();
+      if (json.success && json.data && json.data.appearance_theme) {
+        applyTheme(json.data.appearance_theme);
+      }
+    } catch (e) {}
+  }
+}
+
+window.applyTheme = applyTheme;
 
 // Dynamic Local Live Clock
 function initLiveClock() {

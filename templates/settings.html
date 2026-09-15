@@ -77,7 +77,9 @@ async function loadSettings() {
       const data = json.data;
       document.getElementById('set-notif-safety').checked = data.notifications_safety === 'ON';
       document.getElementById('set-notif-high-risk').checked = data.notifications_high_risk === 'ON';
-      document.getElementById('set-theme-select').value = data.appearance_theme || 'dark';
+      const themeVal = data.appearance_theme || 'dark';
+      document.getElementById('set-theme-select').value = themeVal;
+      if (window.applyTheme) window.applyTheme(themeVal);
       document.getElementById('set-auto-block').value = data.auto_block_threshold || '65';
       document.getElementById('set-session-timeout').value = data.security_session_timeout || '30';
     }
@@ -88,10 +90,13 @@ async function loadSettings() {
 
 async function saveSettings(e) {
   e.preventDefault();
+  const chosenTheme = document.getElementById('set-theme-select').value;
+  if (window.applyTheme) window.applyTheme(chosenTheme);
+
   const payload = {
     notifications_safety: document.getElementById('set-notif-safety').checked ? 'ON' : 'OFF',
     notifications_high_risk: document.getElementById('set-notif-high-risk').checked ? 'ON' : 'OFF',
-    appearance_theme: document.getElementById('set-theme-select').value,
+    appearance_theme: chosenTheme,
     auto_block_threshold: document.getElementById('set-auto-block').value,
     security_session_timeout: document.getElementById('set-session-timeout').value
   };
