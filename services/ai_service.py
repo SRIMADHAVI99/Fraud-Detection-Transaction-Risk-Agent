@@ -87,7 +87,23 @@ class AIService:
         is_anomaly_val = bool(txn.get('is_anomaly'))
 
         # Generate evidence-grounded answer based on query intent
-        if any(w in q_lower for w in ['why', 'flag', 'flagged', 'reason']):
+        if any(w in q_lower for w in ['block', 'blocked', 'should', 'recommendation', 'override']):
+            rec_action = "🚨 **BLOCK PAYMENT IMMEDIATELY**" if risk_level == 'HIGH RISK' else (
+                "⚠️ **HOLD FOR MANUAL REVIEW**" if risk_level == 'CHECK' else "🟢 **ALLOW PAYMENT**"
+            )
+            answer = (
+                f"### Actionable Recommendation & Block Status for `{txn_id_display}`\n\n"
+                f"**System Recommendation:** {rec_action}\n"
+                f"**Current Status:** `{status_val}`\n"
+                f"**Risk Level:** {risk_level} (Score: {risk_score}%)\n\n"
+                f"#### Key Block/Flag Reasons:\n{reasons_bullets}\n\n"
+                f"#### Analyst Action Items:\n"
+                f"1. Review device fingerprint (`{dev_val}`).\n"
+                f"2. Confirm location coordinates ({loc_val}).\n"
+                f"3. Use SOC Action drawer buttons (Allow / Review / Block) to record audit decision."
+            )
+
+        elif any(w in q_lower for w in ['why', 'flag', 'flagged', 'reason']):
             answer = (
                 f"### Flagging Rationale for Transaction `{txn_id_display}`\n\n"
                 f"**Assessed Risk Level:** {risk_level} (Score: {risk_score}%)\n"
@@ -117,32 +133,6 @@ class AIService:
                 f"**Assessment:** {danger_explanation}\n\n"
                 f"#### Evidence Factors:\n{reasons_bullets}\n\n"
                 f"**Recommended Decision:** {'Keep transaction BLOCKED to prevent financial loss.' if status_val == 'BLOCKED' else 'Proceed with standard processing.'}"
-            )
-
-        elif any(w in q_lower for w in ['score', 'cause', 'model', 'isolation', 'forest', 'probability']):
-            answer = (
-                f"### Risk Score Breakdown for Transaction `{txn_id_display}`\n\n"
-                f"**Multi-Signal Risk Score:** {risk_score} / 100\n"
-                f"**Random Forest Fraud Probability:** {fraud_prob}%\n"
-                f"**Isolation Forest Anomaly Status:** {'Outlier Anomaly Detected' if is_anomaly_val else 'Normal Baseline Inlier'}\n"
-                f"**Amount Ratio Spike:** {ratio_val}x historical average\n"
-                f"**Hardware & Geo Status:** New Device: {'Yes' if is_new_dev else 'No'} | New Location: {'Yes' if is_new_loc else 'No'}\n\n"
-                f"#### Contributing Reasons:\n{reasons_bullets}"
-            )
-
-        elif any(w in q_lower for w in ['block', 'should', 'action', 'review', 'allow']):
-            rec_action = "🚨 **BLOCK PAYMENT IMMEDIATELY**" if risk_level == 'HIGH RISK' else (
-                "⚠️ **HOLD FOR MANUAL REVIEW**" if risk_level == 'CHECK' else "🟢 **ALLOW PAYMENT**"
-            )
-            answer = (
-                f"### Actionable Recommendation for `{txn_id_display}`\n\n"
-                f"**Recommendation:** {rec_action}\n\n"
-                f"**Current Status:** `{status_val}`\n"
-                f"**Key Supporting Evidence:**\n{reasons_bullets}\n\n"
-                f"#### Analyst Checklist:\n"
-                f"1. Verify hardware device fingerprint (`{dev_val}`).\n"
-                f"2. Confirm location coordinates ({loc_val}).\n"
-                f"3. Use SOC Action drawer buttons (Allow / Review / Block) to record final decision."
             )
 
         elif any(w in q_lower for w in ['compare', 'normal', 'baseline', 'history']):

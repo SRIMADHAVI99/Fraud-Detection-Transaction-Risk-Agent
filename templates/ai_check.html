@@ -39,10 +39,10 @@
       
       <!-- Quick Question Buttons -->
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <button class="btn btn-outline btn-sm" onclick="sendQuickQuestion('Why was this payment flagged?')">Why flagged?</button>
-        <button class="btn btn-outline btn-sm" onclick="sendQuickQuestion('Is this transaction dangerous?')">Is it dangerous?</button>
-        <button class="btn btn-outline btn-sm" onclick="sendQuickQuestion('What caused the risk score?')">Risk cause?</button>
-        <button class="btn btn-outline btn-sm" onclick="sendQuickQuestion('Should I block this payment?')">Should I block?</button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="sendQuickQuestion('Why was this payment flagged?', event)">Why flagged?</button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="sendQuickQuestion('Is this transaction dangerous?', event)">Is it dangerous?</button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="sendQuickQuestion('What caused the risk score?', event)">Risk cause?</button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="sendQuickQuestion('Should I block this payment?', event)">Should I block?</button>
       </div>
 
       <!-- Conversation Output Box -->
@@ -50,10 +50,10 @@
         Select a quick question or enter a query below to inspect risk factors.
       </div>
 
-      <div style="display: flex; gap: 10px;">
-        <input type="text" id="ai-query-input" class="form-control" placeholder="Type custom investigation query..." onkeyup="if(event.key==='Enter') executeAiQuery()">
-        <button class="btn btn-primary" id="ai-ask-btn" onclick="executeAiQuery()"><i class="fa-solid fa-paper-plane"></i> Ask AI</button>
-      </div>
+      <form id="ai-query-form" onsubmit="executeAiQuery(event)" style="display: flex; gap: 10px; margin: 0; width: 100%;">
+        <input type="text" id="ai-query-input" class="form-control" placeholder="Type custom investigation query..." style="flex: 1;">
+        <button type="submit" class="btn btn-primary" id="ai-ask-btn"><i class="fa-solid fa-paper-plane"></i> Ask AI</button>
+      </form>
     </div>
   </div>
 
@@ -192,16 +192,20 @@ async function loadTargetSummary(txnId) {
   }
 }
 
-function sendQuickQuestion(qText) {
-  document.getElementById('ai-query-input').value = qText;
-  executeAiQuery();
+function sendQuickQuestion(qText, e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const input = document.getElementById('ai-query-input');
+  if (input) input.value = qText;
+  executeAiQuery(e, qText);
 }
 
-async function executeAiQuery() {
+async function executeAiQuery(e, explicitQuery = null) {
+  if (e && e.preventDefault) e.preventDefault();
+
   const input = document.getElementById('ai-query-input');
   const output = document.getElementById('ai-chat-output');
   const askBtn = document.getElementById('ai-ask-btn');
-  const query = input ? input.value.trim() : '';
+  const query = explicitQuery !== null ? explicitQuery : (input ? input.value.trim() : '');
 
   if (input) {
     input.value = '';
@@ -218,7 +222,8 @@ async function executeAiQuery() {
   const timeoutId = setTimeout(() => controller.abort(), 12000);
 
   try {
-    const txnId = currentTargetTxn ? currentTargetTxn.transaction_id : (document.getElementById('ai-txn-select')?.value || null);
+    const selectVal = document.getElementById('ai-txn-select')?.value;
+    const txnId = (selectVal && selectVal.trim()) ? selectVal.trim() : (currentTargetTxn ? currentTargetTxn.transaction_id : null);
     
     const res = await fetch('/api/ai/investigate', {
       method: 'POST',
