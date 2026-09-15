@@ -97,3 +97,13 @@ def test_pdf_report_download_api(client):
     assert res.status_code == 200
     assert res.mimetype == 'application/pdf'
 
+def test_static_css_and_js_loading(client):
+    css_res = client.get('/static/css/style.css')
+    assert css_res.status_code == 200
+    assert 'text/css' in css_res.mimetype
+
+    js_res = client.get('/static/js/app.js')
+    assert js_res.status_code == 200
+    assert 'javascript' in js_res.mimetype
+
+
